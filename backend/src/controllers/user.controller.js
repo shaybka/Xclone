@@ -3,6 +3,7 @@ import asyncHandler from 'express-async-handler';
 import User from '../models/user.model.js';
 import { clerkClient, getAuth } from '@clerk/express';
 import Notification from '../models/notification.model.js';
+
 export const getUserProfile= asyncHandler(async(req,res)=>{
     const { username } = req.params;
     const user = await User.findOne({username});
@@ -95,3 +96,4 @@ export const followUser  = asyncHandler(async(req,res)=>{
     res.status(200).json({message:isFollowing ? "User unfollowed successfully" : "User followed successfully"});
 
 })
+
