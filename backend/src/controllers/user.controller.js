@@ -51,7 +51,7 @@ export const getCurrentUser= asyncHandler(async(req,res)=>{
     res.status(200).json({user});
 })
 
-export const followUser  = asyncHandler(async(re,res)=>{
+export const followUser  = asyncHandler(async(req,res)=>{
     // get the both users
     const { userId } = getAuth(req);
     const {targetUserId} = req.params;
@@ -85,13 +85,13 @@ export const followUser  = asyncHandler(async(re,res)=>{
          });
     }
 
-    //create notification
-    await Notification.create({
-        from: currentUser._id,
-        to: targetUser._id,
-        type:"follow"
-    });
-
+   if (!isFollowing) {
+        await Notification.create({
+            from: currentUser._id,
+            to: targetUser._id,
+            type: "follow"
+        });
+    }
     res.status(200).json({message:isFollowing ? "User unfollowed successfully" : "User followed successfully"});
 
 })
