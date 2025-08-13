@@ -3,8 +3,7 @@ import asyncHandler from 'express-async-handler';
 import User from '../models/user.model.js';
 import { clerkClient, getAuth } from '@clerk/express';
 import Notification from '../models/notification.model.js';
-import Post from '../models/post.model.js';
-import Comment from '../models/comment.model.js';
+
 export const getUserProfile= asyncHandler(async(req,res)=>{
     const { username } = req.params;
     const user = await User.findOne({username});
@@ -98,28 +97,3 @@ export const followUser  = asyncHandler(async(req,res)=>{
 
 })
 
-export const deletePost = asyncHandler(async (req, res) => {
-    const { postId } = req.params;
-    const { userId } = getAuth(req);
-
-    const user = await User.findOne({ clerkId: userId });
-    const post = await Post.findById(postId);
-    if (!post) {
-        return res.status(404).json({ message: "Post not found" });
-    }
-    if(!user){
-        return res.status(404).json({ message: "User not found" });
-    }
-
-
-    // Check if the user is the owner of the post
-    if (post.user.toString() !== user._id.toString()) {
-        return res.status(403).json({ message: "You can only delete your own posts" });
-    }
-
-    //delete all comment on this post
-    await Comment.deleteMany({ post: postId });
-    // delete the post
-    await Post.findByIdAndDelete(postId);
-    res.status(200).json({ message: "Post deleted successfully" });
-});

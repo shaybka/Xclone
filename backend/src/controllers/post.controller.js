@@ -3,6 +3,8 @@ import Post from '../models/post.model.js';
 import User from '../models/user.model.js';
 import { getAuth } from '@clerk/express';
 import cloudinary from '../config/cloudinary.js';
+import Comment from '../models/comment.model.js';
+import Notification from '../models/notification.model.js';
 
 export const getPosts = asyncHandler(async (req, res) => {
     const posts = (await Post.find()).sort({ createdAt: -1 }).populate("user", "username firstName lastName profilePicture")
@@ -49,7 +51,7 @@ export const getUserPosts = asyncHandler(async (req, res) => {
                 select: "username firstName lastName profilePicture"
             }
         });
-    if (!posts) {
+    if (posts.length === 0) {
         res.status(404).json({ message: "No posts found" });
         return;
     }
@@ -58,7 +60,7 @@ export const getUserPosts = asyncHandler(async (req, res) => {
 
 
 export const createPost = asyncHandler(async (req, res) => {
-    const { userid } = getAuth(req);
+    const { userId } = getAuth(req);
     const { content } = req.body;
     const imageFile = req.file;
 
@@ -66,7 +68,7 @@ export const createPost = asyncHandler(async (req, res) => {
         res.status(400).json({ message: "post must Contain text or image" });
         return;
     }
-    const user = await User.findById({ clerkId: userid });
+    const user = await User.findById({ clerkId: userId });
     if (!user) {
         res.status(404).json({ message: "User not found" });
         return;
@@ -144,3 +146,30 @@ export const likePost = asyncHandler(async(req,res)=>{
 
     res.status(200).json({ message: hasLiked ? "Post unliked successfully" : "Post liked successfully" });
 })
+
+
+export const deletePost = asyncHandler(async (req, res) => {
+    const { postId } = req.params;
+    const { userId } = getAuth(req);
+
+    const user = await User.findOne({ clerkId: userId });
+    const post = await Post.findById(postId);
+    if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+    }
+    if(!user){
+        return res.status(404).json({ message: "User not found" });
+    }
+
+
+    // Check if the user is the owner of the post
+    if (post.user.toString() !== user._id.toString()) {
+        return res.status(403).json({ message: "You can only delete your own posts" });
+    }
+
+    //delete all comment on this post
+    await Comment.deleteMany({ post: postId });
+    // delete the post
+    await Post.findByIdAndDelete(postId);
+    res.status(200).json({ message: "Post deleted successfully" });
+});
