@@ -4,6 +4,7 @@ import { connectDB } from './config/db.js';
 import { clerkMiddleware } from '@clerk/express'
 import userRoutes from './routes/user.route.js';
 import postRoutes from './routes/post.routes.js';
+import commentRoutes from './routes/comment.route.js';
 import cors from 'cors';
 const app = express();
 
@@ -16,6 +17,7 @@ app.use(clerkMiddleware())
 
 app.use("/api/users", userRoutes)
 app.use("/api/post", postRoutes)
+app.use("/api/comment", commentRoutes)
 
 // Global error handling middleware
 app.use((err, req, res,next) => {
